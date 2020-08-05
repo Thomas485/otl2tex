@@ -1,4 +1,5 @@
 import sys
+import argparse
 
 actions = {
     "PART": R"\part{{{}}}",
@@ -8,17 +9,15 @@ actions = {
 }
 
 preamble = R"""
-\documentclass[a5paper]{scrbook}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage[ngerman]{babel}
+\documentclass[a5paper]{{scrbook}}
+\usepackage[utf8]{{inputenc}}
+\usepackage[T1]{{fontenc}}
+\usepackage[ngerman]{{babel}}
 
-\begin{document}
+\begin{{document}}
 
-%\subject{}
-\title{Geschichten}
-%\subtitle{}
-\author{Ich}
+\title{{{title}}}
+\author{{{author}}}
 
 \maketitle
 
@@ -49,29 +48,43 @@ def relevant_line(line):
 def help():
     print("otl2tex input-file [output-file]")
 
-def main():
-    if len(sys.argv)<2:
-        help()
-        exit(0)
-
-    infile = sys.argv[1]
-    if len(sys.argv)==3:
-        outfile = sys.argv[2]
+def file_or_default(filename,default):
+    if filename is None:
+        return default
     else:
-        outfile = infile[:-3]+"tex"
+        with open(filename,'r') as f:
+            return f.readlines()
 
-    if outfile==infile:
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-a", "--author", help="author of document", default="me")
+    parser.add_argument("-t", "--title", help="title of the document",default="default title")
+    parser.add_argument("--preamble", help="filename of the preamble")
+    parser.add_argument("--postamble", help="filename of the postamble")
+    parser.add_argument("infile")
+    parser.add_argument("outfile", nargs="?")
+    args = parser.parse_args()
+
+    # prepare arguments
+    if args.outfile is None:
+        args.outfile = args.infile[:-3]+"tex"
+
+    if args.outfile==args.infile:
         print("Error: input-file is output-file, maybe thats not what you intended")
         exit(-1)
+    
+    args.preamble = file_or_default(args.preamble,preamble)
+    args.postamble = file_or_default(args.postamble,postamble)
+
 
     try:
-        with open(outfile,'w') as output_file, open(infile,'r') as input_file:
-            output_file.write(preamble)
+        with open(args.outfile,'w') as output_file, open(args.infile,'r') as input_file:
+            output_file.write(args.preamble.format(author=args.author,title=args.title))
             for line in input_file:
                 if relevant_line(line):
                     output_file.write(process(line))
                     output_file.write("\n")
-            output_file.write(postamble)
+            output_file.write(args.postamble)
     except OSError as e:
         print(f"Error: ", e)
         exit(-1)

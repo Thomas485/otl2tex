@@ -1,5 +1,7 @@
 import sys
 import argparse
+import os
+import toml
 
 actions = {
     "PART": R"\part{{{}}}",
@@ -60,15 +62,38 @@ def file_or_default(filename,default):
         with open(filename,'r') as f:
             return f.readlines()
 
+def try_load_config(args,path):
+    if os.path.exists(os.path.join(os.getcwd(), ".otl2tex.toml")):
+        tmp = toml.load(os.path.join(os.getcwd() , ".otl2tex.toml"))
+        apply_config(args,tmp)
+        print("local config loaded")
+
+def apply_config(args,config):
+    for k,v in config.items():
+        if k == "title" and args.title is None:
+            args.title=v
+        elif k == "author" and args.author is None:
+            args.author=v
+        elif k == "infile" and args.infile is None:
+            args.infile=v
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("-a", "--author", help="author of document", default="me")
     parser.add_argument("-t", "--title", help="title of the document",default="default title")
     parser.add_argument("--preamble", help="filename of the preamble")
     parser.add_argument("--postamble", help="filename of the postamble")
-    parser.add_argument("infile")
+    parser.add_argument("--config", help="defaults to .otl2tex.toml in the local directory")
+    parser.add_argument("infile", nargs="?")
     parser.add_argument("outfile", nargs="?")
     args = parser.parse_args()
+
+    try_load_config(args, args.config or os.path.join(os.getcwd(),".otl2tex.toml"))
+
+    if args.infile is None: # TODO: better way to warn if there is no input?
+        print("No input file given")
+        exit(-1)
 
     # prepare arguments
     if args.outfile is None:
@@ -77,6 +102,8 @@ def main():
     if args.outfile==args.infile:
         print("Error: input-file is output-file, maybe thats not what you intended")
         exit(-1)
+
+    print(args.infile + " -> " + args.outfile)
     
     args.preamble = file_or_default(args.preamble,preamble)
     args.postamble = file_or_default(args.postamble,postamble)

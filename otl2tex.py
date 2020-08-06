@@ -52,9 +52,6 @@ def relevant_line(line):
         or line.startswith(':')
         or any([name in line for name in actions]))
 
-def help():
-    print("otl2tex input-file [output-file]")
-
 def file_or_default(filename,default):
     if filename is None:
         return default
@@ -66,7 +63,8 @@ def try_load_config(args,path):
     if os.path.exists(os.path.join(os.getcwd(), ".otl2tex.toml")):
         tmp = toml.load(os.path.join(os.getcwd() , ".otl2tex.toml"))
         apply_config(args,tmp)
-        print("local config loaded")
+        if not args.quiet:
+            print("local config loaded")
 
 def apply_config(args,config):
     for k,v in config.items():
@@ -80,6 +78,7 @@ def apply_config(args,config):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("-q", "--quiet", help="no status output on command line", action="store_true")
     parser.add_argument("-a", "--author", help="author of document", default="me")
     parser.add_argument("-t", "--title", help="title of the document",default="default title")
     parser.add_argument("--preamble", help="filename of the preamble")
@@ -103,7 +102,8 @@ def main():
         print("Error: input-file is output-file, maybe thats not what you intended")
         exit(-1)
 
-    print(args.infile + " -> " + args.outfile)
+    if not args.quiet:
+        print(args.infile + " -> " + args.outfile)
     
     args.preamble = file_or_default(args.preamble,preamble)
     args.postamble = file_or_default(args.postamble,postamble)

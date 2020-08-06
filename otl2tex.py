@@ -10,9 +10,14 @@ actions = {
 
 preamble = R"""
 \documentclass[a5paper]{{scrbook}}
+\usepackage[ngerman]{{babel}}
+\usepackage{{ifluatex}}
+\ifluatex
+\usepackage{{fontspec}}
+\else
 \usepackage[utf8]{{inputenc}}
 \usepackage[T1]{{fontenc}}
-\usepackage[ngerman]{{babel}}
+\fi
 
 \begin{{document}}
 

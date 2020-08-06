@@ -60,8 +60,8 @@ def file_or_default(filename,default):
             return f.readlines()
 
 def try_load_config(args,path):
-    if os.path.exists(os.path.join(os.getcwd(), ".otl2tex.toml")):
-        tmp = toml.load(os.path.join(os.getcwd() , ".otl2tex.toml"))
+    if os.path.exists(path):
+        tmp = toml.load(path)
         apply_config(args,tmp)
         if not args.quiet:
             print("local config loaded")

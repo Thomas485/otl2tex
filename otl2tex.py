@@ -74,6 +74,8 @@ def apply_config(args,config):
             args.author=v
         elif k == "infile" and args.infile is None:
             args.infile=v
+        elif k == "outfile" and args.outfile is None:
+            args.outfile=v
 
 
 def main():

@@ -84,6 +84,7 @@ def main():
     parser.add_argument("--preamble", help="filename of the preamble")
     parser.add_argument("--postamble", help="filename of the postamble")
     parser.add_argument("--config", help="defaults to .otl2tex.toml in the local directory")
+    parser.add_argument("--write-config", help="store the command line parameters to .otl2tex.toml", action="store_true")
     parser.add_argument("infile", nargs="?")
     parser.add_argument("outfile", nargs="?")
     args = parser.parse_args()
@@ -121,6 +122,16 @@ def main():
         print(f"Error: ", e)
         exit(-1)
 
+    if args.write_config:
+        file = os.path.join(os.path.dirname(args.infile),".otl2tex.toml")
+        with open(file,"w") as f:
+            conf = {
+                "author":args.author,
+                "title":args.title,
+                "infile":args.infile,
+                "outfile":args.outfile
+            }
+            toml.dump(conf,f)
 
 if __name__ == "__main__":
     main()

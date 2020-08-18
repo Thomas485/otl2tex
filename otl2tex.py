@@ -7,7 +7,13 @@ actions = {
     "PART": R"\part{{{}}}",
     "CHAPTER": R"\chapter{{{}}}",
     "SUBSECTION": R"\subsection{{{}}}",
-    "SECTION": R"\section{{{}}}"
+    "SECTION": R"\section{{{}}}",
+    "NAME": """\directlua{{
+      names[\"{name}\"] = {{
+        nominative= \"{nom}\",
+        genitive= \"{gen}\",
+      }}
+    }}"""
 }
 
 preamble = R"""
@@ -20,6 +26,29 @@ preamble = R"""
 \usepackage[utf8]{{inputenc}}
 \usepackage[T1]{{fontenc}}
 \fi
+
+\usepackage{{luacode}}
+
+\begin{{luacode*}}
+  names={{}}
+\end{{luacode*}}
+
+\newcommand\nom[1]{{%
+\luaexec{{
+  if names and names.#1 and names.#1.nominative then
+    tex.print(names.#1.nominative)
+  else
+  error('Error: Can not find nominative for name: ' ..  '#1')
+  end
+}}}}
+\newcommand\gen[1]{{%
+\luaexec{{
+  if names and names.#1 and names.#1.genitive then
+    tex.print(names.#1.genitive)
+  else
+  error('Error: Can not find genitive for name: ' ..  '#1')
+  end
+}}}}
 
 \begin{{document}}
 
@@ -34,6 +63,21 @@ preamble = R"""
 
 postamble = "\n\\end{document}\n"
 
+def map_name_section(line):
+    lst = line.split(' ')
+    if len(lst)==3:
+        return lst
+    else:
+        return None
+
+def extract_name(data,s):
+    lst = map_name_section(data)
+    if lst is None:
+        print("Error: Wrong syntax for NAME:", data)
+        exit(-1)
+    else:
+        return s.format(name=lst[0],nom=lst[1],gen=lst[2])
+
 def process(line):
     line = line.strip()
     if line.startswith(':'):
@@ -42,7 +86,11 @@ def process(line):
         for name,s in actions.items():
             idx = line.find(name)
             if idx>=0:
-                line = s.format(line[idx+len(name)+1:])
+                data = line[idx+len(name)+1:]
+                if name=="NAME":
+                    line = extract_name(data,s)
+                else:
+                    line = s.format(data)
                 break
     return line
 
@@ -121,7 +169,7 @@ def main():
                     output_file.write("\n")
             output_file.write(args.postamble)
     except OSError as e:
-        print(f"Error: ", e)
+        print("Error: ", e)
         exit(-1)
 
     if args.write_config:

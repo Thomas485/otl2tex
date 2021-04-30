@@ -108,11 +108,15 @@ def file_or_default(filename,default):
             return f.readlines()
 
 def try_load_config(args,path):
-    if os.path.exists(path):
+    try:
         tmp = toml.load(path)
         apply_config(args,tmp)
+    except TomlDecodeError as e:
+        print(f"Can't decode toml file '{path}': {e}")
+    else:
         if not args.quiet:
             print("local config loaded")
+
 
 def apply_config(args,config):
     for k,v in config.items():
@@ -159,18 +163,13 @@ def main():
     args.preamble = file_or_default(args.preamble,preamble)
     args.postamble = file_or_default(args.postamble,postamble)
 
-
-    try:
-        with open(args.outfile,'w') as output_file, open(args.infile,'r') as input_file:
-            output_file.write(args.preamble.format(author=args.author,title=args.title))
-            for line in input_file:
-                if relevant_line(line):
-                    output_file.write(process(line))
-                    output_file.write("\n")
-            output_file.write(args.postamble)
-    except OSError as e:
-        print("Error: ", e)
-        exit(-1)
+    with open(args.outfile,'w') as output_file, open(args.infile,'r') as input_file:
+        output_file.write(args.preamble.format(author=args.author,title=args.title))
+        for line in input_file:
+            if relevant_line(line):
+                output_file.write(process(line))
+                output_file.write("\n")
+        output_file.write(args.postamble)
 
     if args.write_config:
         file = os.path.join(os.path.dirname(args.infile),".otl2tex.toml")
@@ -184,4 +183,8 @@ def main():
             toml.dump(conf,f)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except OSError as e:
+        print("Error: ", e)
+        exit(-1)

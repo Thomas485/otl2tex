@@ -10,8 +10,3 @@ Furthermore, there are some experimental commands/markers. The leading content o
 |CHAPTER …|\chapter{…}|
 |SECTION …|\section{…}|
 |SUBSECTION …|\subsection{…}|
-
-## configuration
-You can place a config file called ".otl2tex.toml" in the folder of your otl file.
-In it you can specify the title of the document (title), the author (author) and the inputfile (infile) to simpify the command line arguments.
-Arguments passed via command line have a higher priority.

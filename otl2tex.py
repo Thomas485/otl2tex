@@ -1,83 +1,27 @@
-from typing_extensions import Annotated
-import typer
 import os
+import sys
 
 actions = {
+    "AUTHOR": R"\author{{{}}}",
+    "TITLE": R"\title{{{}}} \maketitle",
+    "TOC": R"\tableofcontents",
     "PART": R"\part{{{}}}",
     "CHAPTER": R"\chapter{{{}}}",
     "SUBSECTION": R"\subsection{{{}}}",
     "SECTION": R"\section{{{}}}",
-    "NAME": r"""\directlua{{
-      names[\"{name}\"] = {{
-        nominative= \"{nom}\",
-        genitive= \"{gen}\",
-      }}
-    }}""",
 }
 
 preamble = R"""
 \documentclass[a5paper]{{scrbook}}
 \usepackage[ngerman]{{babel}}
-\usepackage{{ifluatex}}
-\ifluatex
-\usepackage{{fontspec}}
-\else
 \usepackage[utf8]{{inputenc}}
 \usepackage[T1]{{fontenc}}
-\fi
-
-\usepackage{{luacode}}
-
-\begin{{luacode*}}
-  names={{}}
-\end{{luacode*}}
-
-\newcommand\nom[1]{{%
-\luaexec{{
-  if names and names.#1 and names.#1.nominative then
-    tex.print(names.#1.nominative)
-  else
-  error('Error: Can not find nominative for name: ' ..  '#1')
-  end
-}}}}
-\newcommand\gen[1]{{%
-\luaexec{{
-  if names and names.#1 and names.#1.genitive then
-    tex.print(names.#1.genitive)
-  else
-  error('Error: Can not find genitive for name: ' ..  '#1')
-  end
-}}}}
 
 \begin{{document}}
-
-\title{{{title}}}
-\author{{{author}}}
-
-\maketitle
-
-\tableofcontents
 
 """
 
 postamble = "\n\\end{document}\n"
-
-
-def map_name_section(line):
-    lst = line.split(" ")
-    if len(lst) == 3:
-        return lst
-    else:
-        return None
-
-
-def extract_name(data, s):
-    lst = map_name_section(data)
-    if lst is None:
-        print("Error: Wrong syntax for NAME:", data)
-        exit(-1)
-    else:
-        return s.format(name=lst[0], nom=lst[1], gen=lst[2])
 
 
 def process(line):
@@ -89,10 +33,7 @@ def process(line):
             idx = line.find(name)
             if idx >= 0:
                 data = line[idx + len(name) + 1:]
-                if name == "NAME":
-                    line = extract_name(data, s)
-                else:
-                    line = s.format(data)
+                line = s.format(data)
                 break
     return line
 
@@ -102,14 +43,42 @@ def relevant_line(line):
     return not line or line.startswith(":") or any([name in line for name in actions])
 
 
-def main(infile: str,
-         outfile: str,
-         author: Annotated[str, typer.Option("--author", "-a")] = "Me",
-         title: Annotated[str, typer.Option("--title", "-t")] = "My Title",
-         quiet: Annotated[bool, typer.Option("--quiet", "-q")] = False,
-         pdf: Annotated[bool, typer.Option("--pdf")] = False,
-         ):
+def main():
+    # parse cli flags
+    infile = ""
+    outfile = ""
+    author = "Me"
+    title = "My Title"
+    quiet = False
+    pdf = False
 
+    if len(sys.argv) < 3:
+        print("missing positional arguments: infile and outfile required")
+    elif len(sys.argv) > 3:
+        i= 1
+        while i < len(sys.argv):
+            if sys.argv[i] == "--quiet" or sys.argv[i] == "-q":
+                quiet = True
+                i+=1
+                continue
+            if sys.argv[i] == "--pdf" or sys.argv[i] == "-pdf":
+                pdf = True
+                i+=1
+                continue
+
+            if not infile:
+                infile = sys.argv[i]
+                i+=1
+                continue
+            if not outfile:
+                outfile = sys.argv[i]
+                i+=1
+                continue
+
+            print("Unknown additional argument:", sys.argv[i])
+            return
+
+    # proceed
     if outfile == infile:
         print("Error: input-file is output-file, maybe thats not what you intended")
         exit(-1)
@@ -127,12 +96,8 @@ def main(infile: str,
         output_file.write(postamble)
 
     if pdf:
-        os.system(f"latexmk  -pdf -pdflatex=lualatex {outfile}")
+        os.system(f"latexmk -pdf {outfile}")
 
 
 if __name__ == "__main__":
-    try:
-        typer.run(main)
-    except OSError as e:
-        print("Error: ", e)
-        exit(-1)
+    main()

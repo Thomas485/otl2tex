@@ -1,0 +1,24 @@
+AUTHOR: thomas485
+TITLE: My example book
+TOC
+
+PART: First Volume of Bob's adventures.
+	CHAPTER: Introduction
+		Introduce the main character SECTION: Bob
+			He is dead all along, but the reader must not know it yet.
+			: This is Bob.
+			He is a lazy guy
+			: Bob is a lazy guy.
+			: He doesn't want to do anything.
+
+			: This is a new paragraph.
+		Maybe I should add some more characters
+			A pet?
+	CHAPTER: The journey
+		Bob needs milk for his coffee.
+		The Way to the grocery store
+			He is searching for his shoes
+			: …
+			His bike is broken
+			He is taking the bus
+			: so he decided to take the bus.
